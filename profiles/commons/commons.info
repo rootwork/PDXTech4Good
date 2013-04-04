@@ -96,9 +96,9 @@ dependencies[] = commons_location
 dependencies[] = commons_wysiwyg
 dependencies[] = commons_social_sharing
 
-; Information added by drupal.org packaging script on 2013-02-25
-version = "7.x-3.0"
+; Information added by drupal.org packaging script on 2013-04-04
+version = "7.x-3.2"
 core = "7.x"
 project = "commons"
-datestamp = "1361827541"
+datestamp = "1365040516"
 

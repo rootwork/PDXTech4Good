@@ -24,9 +24,10 @@ features[message_type][] = "example_user_register"
 features[views_view][] = "message_example"
 stylesheets[all][] = "css/message_example.css"
 
-; Information added by drupal.org packaging script on 2013-01-30
+
+; Information added by drush on 2013-04-04
 version = "7.x-1.7+2-dev"
 core = "7.x"
 project = "message"
-datestamp = "1359509464"
+datestamp = "1365040553"
 

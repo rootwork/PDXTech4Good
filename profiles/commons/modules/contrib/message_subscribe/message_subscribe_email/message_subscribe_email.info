@@ -8,9 +8,10 @@ dependencies[] = list
 dependencies[] = message_subscribe_ui
 dependencies[] = views
 
-; Information added by drupal.org packaging script on 2013-02-19
+
+; Information added by drush on 2013-04-04
 version = "7.x-1.0-alpha3+3-dev"
 core = "7.x"
 project = "message_subscribe"
-datestamp = "1361280744"
+datestamp = "1365040543"
 

@@ -241,9 +241,9 @@ function commons_events_solr_apachesolr_process_results(&$results, DrupalSolrQue
 /**
  * Implements hook_preprocess_hook().
  */
-function commons_events_solr_preprocess_search_results(&$variables) {
+function commons_events_solr_process_search_results(&$variables) {
   if ($variables['search_page']['page_id'] == 'solr_events') {
-    $variables['search_title'] = format_plural(count($variables['results']), '1 event', '@count events');
+    $variables['title'] = format_plural(count($variables['results']), '1 event', '@count events');
   }
 }
 
@@ -284,12 +284,10 @@ function commons_events_solr_environment_form_submit($form, $form_state) {
 }
 
 /**
- * Implements hook_modules_enabled().
+ *  Implements hook_node_presave to display a message warning the user that results won't occur immediately
  */
-function commons_events_solr_modules_enabled($modules) {
-  if (in_array('acquia_search', $modules)) {
-    // If Acquia Search is enabled later, we need to force update our facets,
-    // otherwise our Events Solr page has no facets.
-    commons_events_solr_create_facets(ACQUIA_SEARCH_ENVIRONMENT_ID);
+function commons_events_solr_node_presave($node) {
+  if ($node->type == 'event') {
+    drupal_set_message(t('Your event may take a few minutes to appear on the listing page.'));
   }
 }

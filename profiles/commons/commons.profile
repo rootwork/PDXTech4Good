@@ -117,8 +117,8 @@ function commons_install_tasks() {
   }
 
   //make sure we have more memory than 196M. if not lets try to increase it.
-  if (ini_get('max_execution_time') != '-1' && ini_get('max_execution_time') <= '60') {
-    ini_set('max_execution_time', '60');
+  if ((int)ini_get('max_execution_time') != -1 && (int)ini_get('max_execution_time') != 0 && (int)ini_get('max_execution_time') <= 120) {
+    ini_set('max_execution_time', 120);
   }
 
   $demo_content = variable_get('commons_install_example_content', FALSE);
@@ -131,7 +131,7 @@ function commons_install_tasks() {
       'run' => $acquia_connector ? INSTALL_TASK_RUN_IF_NOT_COMPLETED : INSTALL_TASK_SKIP,
     ),
     'commons_installer_palette' => array(
-      'display_name' => st('Chose site color palette'),
+      'display_name' => st('Choose site color palette'),
       'display' => TRUE,
       'type' => 'form',
       'function' => 'commons_installer_palette',
@@ -617,8 +617,7 @@ function commons_install_finished(&$install_state) {
   drupal_flush_all_caches();
 
   // We make custom code for the footer here because we want people to be able to freely edit it if they wish.
-  $footer_body = '<h3>'.variable_get('site_name', 'Drupal Commons').'</h3>
-  <p>'. st('A Commons Community, powered by <a href="@acquia">Acquia</a>', array('@acquia' => url('https://www.acquia.com/products-services/drupal-commons-social-business-software'))) . '</p>';
+  $footer_body = '<p>'. st('A Commons Community, powered by <a href="@acquia">Acquia</a>', array('@acquia' => url('https://www.acquia.com/products-services/drupal-commons-social-business-software'))) . '</p>';
 
   $footer_block_text = array(
     'body' => st($footer_body),
@@ -636,7 +635,7 @@ function commons_install_finished(&$install_state) {
       'status' => 1,
       'pages' => 0,
       'weight' => 1,
-      'title' => '<none>',
+      'title' => variable_get('site_name', 'Drupal Commons'),
     );
     drupal_write_record('block', $footer_block);
   }

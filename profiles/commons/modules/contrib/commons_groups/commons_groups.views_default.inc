@@ -119,7 +119,7 @@ function commons_groups_views_default_views() {
 
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
-  $handler->display->display_options['title'] = 'Contributors';
+  $handler->display->display_options['title'] = 'Group contributors';
   $handler->display->display_options['use_more'] = TRUE;
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
@@ -172,6 +172,8 @@ function commons_groups_views_default_views() {
 
   /* Display: group teaser */
   $handler = $view->new_display('panel_pane', 'group teaser', 'panel_pane_1');
+  $handler->display->display_options['defaults']['title'] = FALSE;
+  $handler->display->display_options['title'] = 'Recent contributors';
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
   $handler->display->display_options['defaults']['pager'] = FALSE;
   $handler->display->display_options['pager']['type'] = 'some';
@@ -257,7 +259,7 @@ function commons_groups_views_default_views() {
   $handler->display->display_options['fields']['og_roles']['label'] = '';
   $handler->display->display_options['fields']['og_roles']['exclude'] = TRUE;
   $handler->display->display_options['fields']['og_roles']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['og_roles']['type'] = 'ul';
+  $handler->display->display_options['fields']['og_roles']['empty'] = 'Contributors';
   $handler->display->display_options['argument_input'] = array(
     'gid' => array(
       'type' => 'context',
@@ -884,7 +886,7 @@ function commons_groups_views_default_views() {
   /* Display: Master */
   $handler = $view->new_display('default', 'Master', 'default');
   $handler->display->display_options['title'] = 'Groups';
-  $handler->display->display_options['use_ajax'] = TRUE;
+  $handler->display->display_options['use_ajax'] = FALSE;
   $handler->display->display_options['use_more_always'] = FALSE;
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['cache']['type'] = 'none';
