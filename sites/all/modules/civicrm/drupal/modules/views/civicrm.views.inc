@@ -1,7 +1,7 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -64,7 +64,7 @@
  * Implements of hook_views_data().
  * Run hook_views_data for active CiviCRM components
  */
-function civicrm_views_data() {
+function civicrm_views_data_alter(&$data) {
 
   if (!civicrm_initialize()) {
     return;
@@ -81,7 +81,7 @@ function civicrm_views_data() {
   // Get list of enabled CiviCRM components
   $enabled = CRM_Core_Component::getEnabledComponents();
 
-  $data = array();
+ // $data = array();
   // Load Core CiviCRM data
   _civicrm_core_data($data, $enabled);
 
@@ -354,7 +354,7 @@ function civicrm_views_custom_data_cache(&$data, $entity_type, $groupID, $subTyp
   foreach ($tree as $groupkey => $currentgroup) {
     if ($groupkey == 'info') {
       return $data;
-      // dodges an invalid argument call after all the groups go through // have a look at what $tree outputs to to see why.
+    // dodges an invalid argument call after all the groups go through // have a look at what $tree outputs to to see why.
     }
     $data[$currentgroup['table_name']]['table']['group'] = t('CiviCRM Custom: ') . $currentgroup['title'];
 
@@ -375,6 +375,15 @@ function civicrm_views_custom_data_cache(&$data, $entity_type, $groupID, $subTyp
         'left_field' => 'id',
         'field' => 'entity_id',
       );
+
+      // expose custom data to contact view, too
+      if ($jointable != 'civicrm_contact') {
+        $data[$currentgroup['table_name']]['table']['join']['civicrm_contact'] = array(
+          'left_table' => $jointable,
+          'left_field' => 'id',
+          'field' => 'entity_id',
+        );
+      }
     }
     $currentgroupfields = $currentgroup['fields'];
     $customHTMLTypes = array(
@@ -399,7 +408,7 @@ function civicrm_views_custom_data_cache(&$data, $entity_type, $groupID, $subTyp
         $handler = array('handler' => 'civicrm_handler_field_custom',
                    'click sortable' => TRUE,);
       } else if ( $currentfield['html_type'] == 'File' ) {
-        $handler = array('handler' => 'views_handler_field',
+        $handler = array('handler' => 'civicrm_handler_field_custom_file',
                    'click sortable' => TRUE,);
       } else {
         $handler = civicrm_get_field_handler($currentfield['data_type']);
@@ -413,6 +422,9 @@ function civicrm_views_custom_data_cache(&$data, $entity_type, $groupID, $subTyp
 
       if ($currentfield['html_type'] == 'Multi-Select Country') {
         $filter_handler = array('handler' => 'civicrm_handler_filter_country_multi');
+      }
+      elseif ($currentfield['html_type'] == 'Multi-Select State/Province') {
+        $filter_handler = array('handler' => 'civicrm_handler_filter_state_multi');
       }
       elseif (!empty($currentfield['option_group_id']) &&
         in_array($currentfield['html_type'], $customMultiValueHTMLTypes)

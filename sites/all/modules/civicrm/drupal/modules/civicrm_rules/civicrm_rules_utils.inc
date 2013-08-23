@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  * $Id$
  *
  */
@@ -42,9 +42,9 @@
  */
 function _civicrm_get_groups() {
   civicrm_initialize();
-  require_once 'api/api.php';
+  require_once 'api/v2/Group.php';
   $params = array('return.id' => 1, 'return.title' => 1, 'version' => 2);
-  $groupInformation = civicrm_api('group', 'get', $params);
+  $groupInformation = civicrm_group_get($params);
 
   $groups = array();
   foreach ($groupInformation as $values) {
@@ -59,13 +59,14 @@ function _civicrm_get_groups() {
  */
 function _civicrm_rules_group_contact($contactId, $groupId, $action = 'add') {
   civicrm_initialize();
+  require_once 'api/v2/GroupContact.php';
   $params = array(
     'contact_id' => $contactId,
     'group_id' => $groupId,
     'version' => 2,
   );
   // This used to be civicrm_group_contact_common($params, $action);
-  $re = civicrm_api('group_contact', 'common', $params, $action);
+  civicrm_group_contact_common($params, $action);
 }
 
 /**
@@ -113,7 +114,7 @@ function civicrm_rules_get_options($type) {
   if (!civicrm_initialize()) {
     return;
   }
-  require_once 'api/api.php';
+
   $result = civicrm_api('OptionValue', 'Get', array('version' => 3, 'option_group_name' => $type));
   foreach ($result['values'] as $options) {
     $values[$options['value']] = $options['label'];

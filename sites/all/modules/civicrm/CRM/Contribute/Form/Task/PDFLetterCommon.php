@@ -80,15 +80,15 @@ class CRM_Contribute_Form_Task_PDFLetterCommon extends CRM_Contact_Form_Task_PDF
         // We can't use CRM_Core_Error::fatal here because the api error elevates the exception level. FIXME. dgg
         if ($result) {
           $receipts++;
-        }
+      }
       }
       if ($thankyou_update) {
         $result = CRM_Core_DAO::setFieldValue('CRM_Contribute_DAO_Contribution', $contributionId, 'thankyou_date', $nowDate);
         // We can't use CRM_Core_Error::fatal here because the api error elevates the exception level. FIXME. dgg
         if ($result) {
           $thanks++;
-        }
       }
+    }
     }
 
     self::createActivities($form, $html_message, $form->_contactIds);
@@ -107,7 +107,7 @@ class CRM_Contribute_Form_Task_PDFLetterCommon extends CRM_Contact_Form_Task_PDF
     if ($updateStatus) {
       CRM_Core_Session::setStatus($updateStatus);
     }
-
+    
     CRM_Utils_System::civiExit(1);
   }
   //end of function

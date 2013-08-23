@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -27,20 +27,20 @@
 <table class="form-layout">
     <tr>
         <td>{$form.mailing_name.label}<br />
-            {$form.mailing_name.html|crmReplace:class:big} {help id="id-mailing_name"}
+            {$form.mailing_name.html|crmAddClass:big} {help id="id-mailing_name"}
         </td>
     </tr>
     <tr>
         <td>
 	    <label>{if $sms eq 1}{ts}SMS Date{/ts}{else}{ts}Mailing Date{/ts}{/if}</label>
-	</td>
+  </td>
     </tr>
     <tr>
-	{include file="CRM/Core/DateRange.tpl" fieldName="mailing" from='_from' to='_to'}
+  {include file="CRM/Core/DateRange.tpl" fieldName="mailing" from='_from' to='_to'}
     </tr>
     <tr>
         <td colspan="1">{$form.sort_name.label}<br />
-            {$form.sort_name.html|crmReplace:class:big} {help id="id-create_sort_name"}
+            {$form.sort_name.html|crmAddClass:big} {help id="id-create_sort_name"}
         </td>
         <td width="100%"><label>{if $sms eq 1}{ts}SMS Status{/ts}{else}{ts}Mailing Status{/ts}{/if}</label><br />
         <div class="listing-box" style="width: auto; height: 60px">

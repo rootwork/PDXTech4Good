@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  * $Id$
  *
  */
@@ -63,7 +63,9 @@ class CRM_Mailing_Selector_Browse extends CRM_Core_Selector_Base implements CRM_
    *
    * @return CRM_Contact_Selector_Profile
    * @access public
-   */ function __construct() {}
+   */
+  function __construct() {
+  }
   //end of constructor
 
   /**
@@ -73,8 +75,7 @@ class CRM_Mailing_Selector_Browse extends CRM_Core_Selector_Base implements CRM_
    * @access public
    *
    */
-  static
-  function &links() {
+  static function &links() {
     return self::$_links;
   }
   //end of function
@@ -352,12 +353,8 @@ LEFT JOIN  civicrm_contact scheduledContact ON ( $mailing.scheduled_id = schedul
           }
         }
         else {
-          //FIXME : currently we are hiding continue action for
-          //search base mailing, we should handle it when we fix CRM-3876
-          if (!in_array($row['id'], $searchMailings)) {
-            if ($allAccess || ($showCreateLinks || $showScheduleLinks)) {
-              $actionMask = CRM_Core_Action::PREVIEW;
-            }
+          if ($allAccess || ($showCreateLinks || $showScheduleLinks)) {
+            $actionMask = CRM_Core_Action::PREVIEW;
           }
         }
         if (in_array($row['status'], array(

@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  * $Id$
  *
  */
@@ -41,7 +41,7 @@ class CRM_SMS_Page_Callback
     
     if (array_key_exists('status',$_REQUEST)){
       $provider->callback();
-    } elseif (array_key_exists('api_id',$_REQUEST) && array_key_exists('moMsgId',$_REQUEST)){
+    } else {
       $provider->inbound();
     }
   }

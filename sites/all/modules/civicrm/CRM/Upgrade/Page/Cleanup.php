@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -43,6 +43,6 @@ class CRM_Upgrade_Page_Cleanup  extends CRM_Core_Page {
     $template->assign('postMessage', $postMessage);
 
     $content = $template->fetch('CRM/common/upgradeCleanup.tpl');
-    echo CRM_Utils_System::theme('page', $content, TRUE, FALSE, FALSE, TRUE);
+    echo CRM_Utils_System::theme($content, FALSE, TRUE);
   }
 }

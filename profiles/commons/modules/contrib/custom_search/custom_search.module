@@ -8,6 +8,7 @@
  */
 
 define('CUSTOM_SEARCH_LABEL_DEFAULT', t('Search this site'));
+define('CUSTOM_SEARCH_HINT_TEXT_DEFAULT', t('Enter the terms you wish to search for.'));
 define('CUSTOM_SEARCH_SUBMIT_TEXT_DEFAULT', t('Search'));
 define('CUSTOM_SEARCH_TYPE_SELECTOR_LABEL_DEFAULT', t('Search for'));
 define('CUSTOM_SEARCH_MAX_LENGTH_DEFAULT', 128);
@@ -162,12 +163,13 @@ function custom_search_form_alter(&$form, &$form_state, $form_id) {
 
         // Search box.
         $form[$form_id]['#weight'] = variable_get('custom_search_' . $delta . 'search_box_weight', 0);
-        $form[$form_id]['#attributes'] = array(
-          'class'       => array('custom-search-box'),
-          'placeholder' => array(variable_get('custom_search_' . $delta . 'text', '')),
-        );
         $form[$form_id]['#size'] = variable_get('custom_search_' . $delta . 'size', CUSTOM_SEARCH_SIZE_DEFAULT);
         $form[$form_id]['#maxlength'] = variable_get('custom_search_' . $delta . 'max_length', CUSTOM_SEARCH_MAX_LENGTH_DEFAULT);
+        if (!isset($form[$form_id]['#attributes'])) $form[$form_id]['#attributes'] = array('class' => array());
+        elseif (!isset($form[$form_id]['#attributes']['class'])) $form[$form_id]['#attributes']['class'] = array();
+        $form[$form_id]['#attributes']['class'][] = 'custom-search-box';
+        $form[$form_id]['#attributes']['placeholder'] = variable_get('custom_search_' . $delta . 'text', '');
+        $form[$form_id]['#attributes']['title'] = variable_get('custom_search_' . $delta . 'hint_text', CUSTOM_SEARCH_HINT_TEXT_DEFAULT);
 
         // CSS
         drupal_add_css(drupal_get_path('module', 'custom_search') . '/custom_search.css');
@@ -210,7 +212,7 @@ function custom_search_form_alter(&$form, &$form_state, $form_id) {
         }
         foreach (module_implements('search_info') as $module) {
           if ($module != 'node' && $name = module_invoke($module, 'search_info')) {
-            if (in_array($module, $others)) $options['o-' . $module] = $name['title'];
+            if (in_array($module, $others)) $options['o-' . $module] = t($name['title']);
           }
         }
         if (count($options)) {
@@ -300,6 +302,17 @@ function custom_search_form_alter(&$form, &$form_state, $form_id) {
           }
         }
 
+        // Invoke other modules hooks
+        foreach (module_implements('custom_search_box') as $module) {
+          $function = $module . '_custom_search_box';
+          if (function_exists($function)) {
+            call_user_func_array($function, array(&$form, $form_id, $delta));
+          }
+        }
+
+        // if nothing has been added to the popup, don't output any markup
+        if (!count(element_children($form['popup']))) unset($form['popup']);
+
         // Form attributes
         $form['#attributes']['class'] = array('search-form');
         if (!in_array('custom_search_submit', $form['#submit'])) {
@@ -367,8 +380,12 @@ function custom_search_submit($form, &$form_state) {
       $keys = search_expression_insert($keys, 'term', implode(',', $terms));
     }
     if (module_exists('custom_search_i18n')) {
-      if (variable_get('custom_search_i18n_' . $delta . 'search_language', 'all') == 'current') {
+      $i18n_search_language = variable_get('custom_search_i18n_' . $delta . 'search_language', 'all');
+      if ($i18n_search_language == 'current') {
         $keys = search_expression_insert($keys, 'language', i18n_language()->language);
+      }
+      elseif ($i18n_search_language == 'current_neutral') {
+        $keys = search_expression_insert($keys, 'language', i18n_language()->language . ',und');
       }
     }
   }

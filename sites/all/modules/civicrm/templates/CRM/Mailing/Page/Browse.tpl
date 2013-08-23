@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -83,14 +83,14 @@
         {if $unscheduled}
             <td class="crm-mailing-created_date">{$row.created_date}</td>
         {else}
-            <td class="crm-mailing-scheduled_by"><a href ={crmURL p='civicrm/contact/view' q="reset=1&cid="}{$row.scheduled_id}>{$row.scheduled_by}</a></td>	
+            <td class="crm-mailing-scheduled_by"><a href ={crmURL p='civicrm/contact/view' q="reset=1&cid="}{$row.scheduled_id}>{$row.scheduled_by}</a></td>
             <td class="crm-mailing-scheduled">{$row.scheduled}</td>
             <td class="crm-mailing-start">{$row.start}</td>
             <td class="crm-mailing-end">{$row.end}</td>
         {/if}
-	    {if call_user_func(array('CRM_Campaign_BAO_Campaign','isCampaignEnable'))}
-	        <td class="crm-mailing-campaign">{$row.campaign}</td>
-	    {/if}
+      {if call_user_func(array('CRM_Campaign_BAO_Campaign','isCampaignEnable'))}
+          <td class="crm-mailing-campaign">{$row.campaign}</td>
+      {/if}
         <td>{$row.action|replace:'xx':$row.id}</td>
       </tr>
       {/foreach}
@@ -99,9 +99,9 @@
 
     {include file="CRM/common/pager.tpl" location="bottom"}
     {if $showLinks}
-    	<div class="action-link">
+      <div class="action-link">
             <a accesskey="N" href="{crmURL p=$newMassUrl q='reset=1'}" class="button"><span><div class="icon email-icon"></div>{ts}{$linkTitle}{/ts}</span></a><br/>
-    	</div>
+      </div>
     {/if}
 
 {* No mailings to list. Check isSearch flag to see if we're in a search or not. *}
@@ -109,7 +109,7 @@
     {if $archived}
         {capture assign=browseURL}{crmURL p='civicrm/mailing/browse/archived' q="reset=1"}{$qVal}{/capture}
         {assign var="browseType" value="Archived"}
-    {elseif $unscheduled} 
+    {elseif $unscheduled}
         {capture assign=browseURL}{crmURL p='civicrm/mailing/browse/unscheduled' q="scheduled=false&reset=1"}{$qVal}{/capture}
         {assign var="browseType" value="Draft and Unscheduled"}
     {else}
@@ -120,7 +120,7 @@
         <table class="form-layout">
             <tr><div class="icon inform-icon"></div>
                {ts 1=$componentName}No %1 match your search criteria. Suggestions:{/ts} 
-	    </tr>
+      </tr>
                 <div class="spacer"></div>
                 <ul>
                 <li>{ts}Check your spelling.{/ts}</li>
@@ -131,21 +131,21 @@
     </div>
 {elseif $unscheduled}
 
-    <div class="messages status">
+    <div class="messages status no-popup">
             <div class="icon inform-icon"></div>&nbsp;
             {capture assign=crmURL}{crmURL p=$newMassUrl q='reset=1'}{/capture}
             {ts 1=$componentName}There are no Unscheduled %1.{/ts}
-	    {if $showLinks}{ts 1=$crmURL}You can <a href='%1'>create and send one</a>.{/ts}{/if}
+      {if $showLinks}{ts 1=$crmURL}You can <a href='%1'>create and send one</a>.{/ts}{/if}
    </div>
 
 {elseif $archived}
-    <div class="messages status">
+    <div class="messages status no-popup">
             <div class="icon inform-icon"></div>&nbsp
             {capture assign=crmURL}{crmURL p='civicrm/mailing/browse/scheduled' q='scheduled=true&reset=1'}{$qVal}{/capture}
             {ts 1=$crmURL 2=$componentName}There are no Archived %2. You can archive %2 from <a href='%1'>Scheduled or Sent %2</a>.{/ts}
    </div>
 {else}
-    <div class="messages status">
+    <div class="messages status no-popup">
             <div class="icon inform-icon"></div>&nbsp;
             {capture assign=crmURL}{crmURL p=$newMassUrl q='reset=1'}{/capture}
             {capture assign=archiveURL}{crmURL p='civicrm/mailing/browse/archived' q='reset=1'}{$qVal}{/capture}

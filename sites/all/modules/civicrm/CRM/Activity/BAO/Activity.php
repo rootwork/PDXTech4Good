@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  * $Id$
  *
  */
@@ -86,7 +86,7 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity {
    * @return object CRM_Core_BAO_Meeting object
    * @access public
    */
-  public function retrieve(&$params, &$defaults) {
+  public static function retrieve(&$params, &$defaults) {
     $activity = new CRM_Activity_DAO_Activity();
     $activity->copyValues($params);
 
@@ -275,7 +275,7 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity {
    * @return null
    * @access public
    */
-  public function createActivityTarget($params) {
+  static function createActivityTarget($params) {
     if (!$params['target_contact_id']) {
       return;
     }
@@ -298,7 +298,7 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity {
    * @return null
    * @access public
    */
-  public function createActivityAssignment($params) {
+  static function createActivityAssignment($params) {
     if (!$params['assignee_contact_id']) {
       return;
     }
@@ -393,10 +393,7 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity {
     $activityId = $activity->id;
 
     // check and attach and files as needed
-    CRM_Core_BAO_File::processAttachment($params,
-      'civicrm_activity',
-      $activityId
-    );
+    CRM_Core_BAO_File::processAttachment($params, 'civicrm_activity', $activityId);
 
     // attempt to save activity assignment
     $resultAssignment = NULL;
@@ -419,7 +416,7 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity {
         while (!empty($values)) {
           $input = array_splice($values, 0, CRM_Core_DAO::BULK_INSERT_COUNT);
           $str   = implode(',', $input);
-          $sql   = "INSERT INTO civicrm_activity_assignment ( activity_id, assignee_contact_id ) VALUES $str;";
+          $sql   = "INSERT IGNORE INTO civicrm_activity_assignment ( activity_id, assignee_contact_id ) VALUES $str;";
           CRM_Core_DAO::executeQuery($sql);
         }
       }
@@ -474,7 +471,7 @@ class CRM_Activity_BAO_Activity extends CRM_Activity_DAO_Activity {
         while (!empty($values)) {
           $input = array_splice($values, 0, CRM_Core_DAO::BULK_INSERT_COUNT);
           $str   = implode(',', $input);
-          $sql   = "INSERT INTO civicrm_activity_target ( activity_id, target_contact_id ) VALUES $str;";
+          $sql   = "INSERT IGNORE INTO civicrm_activity_target ( activity_id, target_contact_id ) VALUES $str;";
           CRM_Core_DAO::executeQuery($sql);
         }
       }
@@ -837,8 +834,10 @@ LEFT JOIN  civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.ac
 
     //CRM-3553, need to check user has access to target groups.
     $mailingIDs = CRM_Mailing_BAO_Mailing::mailingACLIDs();
-    $accessCiviMail = ((CRM_Core_Permission::check('access CiviMail')) ||
-      (CRM_Mailing_Info::workflowEnabled() && CRM_Core_Permission::check('create mailings'))
+    $accessCiviMail = (
+      (CRM_Core_Permission::check('access CiviMail')) ||
+      (CRM_Mailing_Info::workflowEnabled() &&
+        CRM_Core_Permission::check('create mailings'))
     );
 
     //get all campaigns.
@@ -886,7 +885,10 @@ LEFT JOIN  civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.ac
       else {
         $values[$activityID]['recipients'] = ts('(recipients)');
         $values[$activityID]['mailingId'] = '';
-        if ($accessCiviMail && in_array($dao->source_record_id, $mailingIDs)) {
+        if (
+          $accessCiviMail &&
+          ($mailingIDs === TRUE || in_array($dao->source_record_id, $mailingIDs))
+        ) {
           $values[$activityID]['mailingId'] = CRM_Utils_System::url('civicrm/mailing/report',
             "mid={$dao->source_record_id}&reset=1&cid={$dao->source_contact_id}&context=activitySelector"
           );
@@ -1058,6 +1060,21 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
         $commonClauses[] = "civicrm_activity.activity_type_id = $activityTypeID";
       }
     }
+
+    // exclude by activity type clause
+    if (!empty($input['activity_type_exclude_id'])) {
+      if (is_array($input['activity_type_exclude_id'])) {
+        foreach ($input['activity_type_exclude_id'] as $idx => $value) {
+          $input['activity_type_exclude_id'][$idx] = CRM_Utils_Type::escape($value, 'Positive');
+        }
+        $commonClauses[] = "civicrm_activity.activity_type_id NOT IN ( " . implode(",", $input['activity_type_exclude_id']) . " ) ";
+      }
+      else {
+        $activityTypeID = CRM_Utils_Type::escape($input['activity_type_exclude_id'], 'Positive');
+        $commonClauses[] = "civicrm_activity.activity_type_id != $activityTypeID";
+      }
+    }
+
     $commonClause = implode(' AND ', $commonClauses);
 
     $includeCaseActivities = FALSE;
@@ -1227,7 +1244,8 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
    * @access public
    * @static
    */
-  static function sendEmail(&$contactDetails,
+  static function sendEmail(
+    &$contactDetails,
     &$subject,
     &$text,
     &$html,
@@ -1237,7 +1255,7 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
     $attachments = NULL,
     $cc          = NULL,
     $bcc         = NULL,
-    &$contactIds
+    $contactIds // FIXME a param with no default shouldn't be last
   ) {
     // get the contact details of logged in contact, which we set as from email
     if ($userID == NULL) {
@@ -1256,11 +1274,9 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
     // CRM-4575
     // token replacement of addressee/email/postal greetings
     // get the tokens added in subject and message
-    $messageToken = CRM_Utils_Token::getTokens($text);
     $subjectToken = CRM_Utils_Token::getTokens($subject);
-    $messageToken = array_merge($messageToken,
-      CRM_Utils_Token::getTokens($html)
-    );
+    $messageToken = CRM_Utils_Token::getTokens($text);
+    $messageToken = array_merge($messageToken, CRM_Utils_Token::getTokens($html));
 
     if (!$from) {
       $from = "$fromDisplayName <$fromEmail>";
@@ -1304,7 +1320,7 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
     $activity = self::create($activityParams);
 
     // get the set of attachments from where they are stored
-    $attachments = &CRM_Core_BAO_File::getEntityFile('civicrm_activity',
+    $attachments = CRM_Core_BAO_File::getEntityFile('civicrm_activity',
       $activity->id
     );
     $returnProperties = array();
@@ -1326,7 +1342,8 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
     // get token details for contacts, call only if tokens are used
     $details = array();
     if (!empty($returnProperties)) {
-      list($details) = CRM_Utils_Token::getTokenDetails($contactIds,
+      list($details) = CRM_Utils_Token::getTokenDetails(
+        $contactIds,
         $returnProperties,
         NULL, NULL, FALSE,
         $messageToken,
@@ -1340,9 +1357,7 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
     $categories = array_keys($tokens);
 
     $escapeSmarty = FALSE;
-    if (defined('CIVICRM_MAIL_SMARTY') &&
-      CIVICRM_MAIL_SMARTY
-    ) {
+    if (defined('CIVICRM_MAIL_SMARTY') && CIVICRM_MAIL_SMARTY) {
       $smarty = CRM_Core_Smarty::singleton();
       $escapeSmarty = TRUE;
     }
@@ -1379,9 +1394,7 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
         $tokenHtml = NULL;
       }
 
-      if (defined('CIVICRM_MAIL_SMARTY') &&
-        CIVICRM_MAIL_SMARTY
-      ) {
+      if (defined('CIVICRM_MAIL_SMARTY') && CIVICRM_MAIL_SMARTY) {
         // also add the contact tokens to the template
         $smarty->assign_by_ref('contact', $values);
 
@@ -1391,7 +1404,8 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
       }
 
       $sent = FALSE;
-      if (self::sendMessage($from,
+      if (self::sendMessage(
+          $from,
           $userID,
           $contactId,
           $tokenSubject,
@@ -1468,9 +1482,14 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
       }
     }
 
+    // call token hook
+    $tokens = array();
+    CRM_Utils_Hook::tokens($tokens);
+    $categories = array_keys($tokens);
+
     // get token details for contacts, call only if tokens are used
     $details = array();
-    if (!empty($returnProperties)) {
+    if (!empty($returnProperties) || !empty($tokens)) {
       list($details) = CRM_Utils_Token::getTokenDetails($contactIds,
         $returnProperties,
         NULL, NULL, FALSE,
@@ -1479,12 +1498,9 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
       );
     }
 
-    // call token hook
-    $tokens = array();
-    CRM_Utils_Hook::tokens($tokens);
-    $categories = array_keys($tokens);
-
-    $escapeSmarty = $sent = FALSE;
+    $success = 0;
+    $escapeSmarty = FALSE;
+    $errMsgs = array();
     foreach ($contactDetails as $values) {
       $contactId = $values['contact_id'];
 
@@ -1501,20 +1517,43 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
       $tokenHtml = CRM_Utils_Token::replaceContactTokens($html, $values, TRUE, $messageToken, FALSE, $escapeSmarty);
       $tokenHtml = CRM_Utils_Token::replaceHookTokens($tokenHtml, $values, $categories, TRUE, $escapeSmarty);
 
-      $smsParams['To'] = $values['phone'];
+      // Only send if the phone is of type mobile
+      $phoneTypes = CRM_Core_OptionGroup::values('phone_type', TRUE, FALSE, FALSE, NULL, 'name');
+      if ($values['phone_type_id'] == CRM_Utils_Array::value('Mobile', $phoneTypes)) {
+        $smsParams['To'] = $values['phone'];
+      }
+      else {
+        $smsParams['To'] = '';
+      }
 
-      if (self::sendSMSMessage($contactId,
-          $tokenText,
-          $tokenHtml,
-          $smsParams,
-          $activityID
-        )) {
-        // even a single successful delivery should set this falg to true
-        $sent = TRUE;
+      $sendResult = self::sendSMSMessage(
+        $contactId,
+        $tokenText,
+        $tokenHtml,
+        $smsParams,
+        $activityID
+      );
+
+      if (PEAR::isError($sendResult)) {
+        // Collect all of the PEAR_Error objects
+        $errMsgs[] = $sendResult;
+      } else {
+        $success++;
       }
     }
 
-    return array($sent, $activity->id);
+    // If at least one message was sent and no errors
+    // were generated then return a boolean value of TRUE.
+    // Otherwise, return FALSE (no messages sent) or
+    // and array of 1 or more PEAR_Error objects.
+    $sent = FALSE;
+    if ($success > 0 && count($errMsgs) == 0) {
+      $sent = TRUE;
+    } elseif (count($errMsgs) > 0) {
+      $sent = $errMsgs;
+    }
+
+    return array($sent, $activity->id, $success);
   }
 
   /**
@@ -1524,11 +1563,10 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
    * @param int    $activityID        the activity ID that tracks the message
    * @param array  $smsParams         the params used for sending sms
    *
-   * @return boolean                  true if successfull else false.
+   * @return mixed                    true on success or PEAR_Error object
    * @access public
    * @static
    */
-
   static function sendSMSMessage($toID,
     &$tokenText,
     &$tokenHtml,
@@ -1556,7 +1594,11 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
     // make sure both phone are valid
     // and that the recipient wants to receive sms
     if (empty($toPhoneNumber) or $toDoNotSms) {
-      return FALSE;
+      return PEAR::raiseError(
+        'Recipient phone number is invalid or recipient does not want to receive SMS',
+        null,
+        PEAR_ERROR_RETURN
+      );
     }
 
     $message = $tokenHtml ? $tokenHtml : $tokenText;
@@ -1565,8 +1607,9 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
     $smsParams['parent_activity_id'] = $activityID;
 
     $providerObj = CRM_SMS_Provider::singleton(array('provider_id' => $smsParams['provider_id']));
-    if (!$providerObj->send($recipient, $smsParams, $message, NULL)) {
-      return FALSE;
+    $sendResult = $providerObj->send($recipient, $smsParams, $message, NULL);
+    if (PEAR::isError($sendResult)) {
+      return $sendResult;
     }
 
     // add activity target record for every sms that is send
@@ -1677,7 +1720,7 @@ LEFT JOIN   civicrm_case_activity ON ( civicrm_case_activity.activity_id = tbl.a
       // Using new Dedupe rule.
       $ruleParams = array(
         'contact_type' => 'Individual',
-        'level' => 'Strict',
+        'used'         => 'Unsupervised',
       );
       $fieldsArray = CRM_Dedupe_BAO_Rule::dedupeRuleFields($ruleParams);
 
@@ -2150,6 +2193,12 @@ AND cl.modified_id  = c.id
         if (isset($exportableFields['activity_campaign_id'])) {
           $exportableFields['activity_campaign'] = array('title' => ts('Campaign Title'));
         }
+        $exportableFields['source_contact_id']['title'] = ts('Source Contact ID');
+        $exportableFields['source_contact'] = array(
+          'title' => ts('Source Contact'),
+          'type' => CRM_Utils_Type::T_STRING,
+        );
+
 
         $Activityfields = array(
           'activity_type' => array('title' => ts('Activity Type'), 'type' => CRM_Utils_Type::T_STRING),
@@ -2502,6 +2551,7 @@ INNER JOIN  civicrm_option_group grp ON ( grp.id = val.option_group_id AND grp.n
         }
         elseif (!empty($values['assignee_contact_name'])) {
           $count = 0;
+          $contactActivities[$activityId]['assignee_contact'] = '';
           foreach ($values['assignee_contact_name'] as $acID => $acName) {
             if ($acID && $count < 5) {
               $contactActivities[$activityId]['assignee_contact'] .= CRM_Utils_System::href($acName, 'civicrm/contact/view', "reset=1&cid={$acID}");
@@ -2516,6 +2566,18 @@ INNER JOIN  civicrm_option_group grp ON ( grp.id = val.option_group_id AND grp.n
               }
             }
           }
+        }
+        if ( $values['activity_type'] == 'Bulk Email'){
+          $contactActivities[$activityId]['openstats'] = "Opens: ".
+            count(CRM_Mailing_Event_BAO_Opened::getRows(
+               CRM_Utils_Array::value('source_record_id', $values), NULL, FALSE, NULL, NULL, NULL, $params['contact_id']
+            )
+          )."<br />Clicks:" .
+            count(CRM_Mailing_Event_BAO_TrackableURLOpen::getRows(
+               CRM_Utils_Array::value('source_record_id', $values), NULL, FALSE, NULL, NULL, NULL, NULL, $params['contact_id']
+          ) );
+        }else {
+          $contactActivities[$activityId]['openstats'] = '';
         }
 
         $contactActivities[$activityId]['activity_date'] = CRM_Utils_Date::customFormat($values['activity_date_time']);
@@ -2564,10 +2626,9 @@ INNER JOIN  civicrm_option_group grp ON ( grp.id = val.option_group_id AND grp.n
   }
 
   /*
-     * Used to copy custom fields and attachments from an existing activity to another.
-     * see CRM_Case_Page_AJAX::_convertToCaseActivity() for example
-     */
-
+   * Used to copy custom fields and attachments from an existing activity to another.
+   * see CRM_Case_Page_AJAX::_convertToCaseActivity() for example
+   */
   static function copyExtendedActivityData($params) {
     // attach custom data to the new activity
     $customParams = $htmlType = array();

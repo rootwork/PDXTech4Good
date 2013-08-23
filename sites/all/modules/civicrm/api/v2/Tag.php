@@ -1,12 +1,12 @@
 <?php
-// $Id: Tag.php 43319 2012-10-31 20:32:06Z totten $
+// $Id: Tag.php 45502 2013-02-08 13:32:55Z kurund $
 
 
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -34,8 +34,8 @@
  * @package CiviCRM_APIv2
  * @subpackage API_Tag
  *
- * @copyright CiviCRM LLC (c) 2004-2012
- * @version $Id: Tag.php 43319 2012-10-31 20:32:06Z totten $
+ * @copyright CiviCRM LLC (c) 2004-2013
+ * @version $Id: Tag.php 45502 2013-02-08 13:32:55Z kurund $
  * @todo Erik Hommel 15/12/2010 version to be implemented
  */
 

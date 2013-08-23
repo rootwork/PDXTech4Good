@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  * $Id$
  *
  */
@@ -50,7 +50,8 @@ class CRM_Core_I18n {
    * @param  $locale string  the base of this certain object's existence
    *
    * @return         void
-   */ function __construct($locale) {
+   */
+  function __construct($locale) {
     if ($locale != '' and $locale != 'en_US') {
       $config = CRM_Core_Config::singleton();
 
@@ -61,7 +62,11 @@ class CRM_Core_I18n {
 
         $locale .= '.utf8';
         putenv("LANG=$locale");
-        setlocale(LC_ALL, $locale);
+
+        // CRM-11833 Avoid LC_ALL because of LC_NUMERIC and potential DB error.
+        setlocale(LC_TIME, $locale);
+        setlocale(LC_MESSAGES, $locale);
+        setlocale(LC_CTYPE, $locale);
 
         bindtextdomain('civicrm', $config->gettextResourceDir);
         bind_textdomain_codeset('civicrm', 'UTF-8');
@@ -188,8 +193,7 @@ class CRM_Core_I18n {
    *
    * @return        string  the translated string
    */
-  function crm_translate($text, $params = array(
-    )) {
+  function crm_translate($text, $params = array()) {
     if (isset($params['escape'])) {
       $escape = $params['escape'];
       unset($params['escape']);
@@ -352,7 +356,7 @@ class CRM_Core_I18n {
         $array[$key] = $value;
       }
       elseif ((string ) $key == 'title') {
-        $array[$key] = ts($value);
+        $array[$key] = ts($value, array('context' => 'menu'));
       }
     }
   }

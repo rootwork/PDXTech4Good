@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  * $Id$
  *
  */
@@ -73,6 +73,31 @@ class CRM_Core_BAO_Cache extends CRM_Core_DAO_Cache {
   }
 
   /**
+   * Retrieve all items in a group
+   *
+   * @param string $group (required) The group name of the item
+   * @param int    $componentID The optional component ID (so componenets can share the same name space)
+   *
+   * @return object The data if present in cache, else null
+   * @static
+   * @access public
+   */
+  static function &getItems($group, $componentID = NULL) {
+    $dao = new CRM_Core_DAO_Cache();
+
+    $dao->group_name   = $group;
+    $dao->component_id = $componentID;
+    $dao->find();
+
+    $result = array(); // array($path => $data)
+    while ($dao->fetch()) {
+      $result[$dao->path] = unserialize($dao->data);
+    }
+    $dao->free();
+    return $result;
+  }
+
+  /**
    * Store an item in the DB cache
    *
    * @param object $data  (required) A reference to the data that will be serialized and stored
@@ -91,11 +116,21 @@ class CRM_Core_BAO_Cache extends CRM_Core_DAO_Cache {
     $dao->path         = $path;
     $dao->component_id = $componentID;
 
+    // get a lock so that multiple ajax requests on the same page
+    // dont trample on each other
+    // CRM-11234
+    $lockName = "civicrm.cache.{$group}_{$path}._{$componentID}";
+    $lock = new CRM_Core_Lock($lockName);
+    if (!$lock->isAcquired()) {
+      CRM_Core_Error::fatal();
+    }
+
     $dao->find(TRUE);
     $dao->data = serialize($data);
     $dao->created_date = date('YmdHis');
-
     $dao->save();
+
+    $lock->release();
 
     $dao->free();
   }
@@ -162,23 +197,23 @@ class CRM_Core_BAO_Cache extends CRM_Core_DAO_Cache {
           $value = $_SESSION[$sessionName[0]][$sessionName[1]];
         }
         self::setItem($value, 'CiviCRM Session', "{$sessionName[0]}_{$sessionName[1]}");
-        if ($resetSession) {
-          $_SESSION[$sessionName[0]][$sessionName[1]] = NULL;
-          unset($_SESSION[$sessionName[0]][$sessionName[1]]);
+          if ($resetSession) {
+            $_SESSION[$sessionName[0]][$sessionName[1]] = NULL;
+            unset($_SESSION[$sessionName[0]][$sessionName[1]]);
+          }
         }
-      }
       else {
         $value = null;
         if (!empty($_SESSION[$sessionName])) {
           $value = $_SESSION[$sessionName];
         }
         self::setItem($value, 'CiviCRM Session', $sessionName);
-        if ($resetSession) {
-          $_SESSION[$sessionName] = NULL;
-          unset($_SESSION[$sessionName]);
+          if ($resetSession) {
+            $_SESSION[$sessionName] = NULL;
+            unset($_SESSION[$sessionName]);
+          }
         }
       }
-    }
 
     self::cleanup();
   }
@@ -300,7 +335,7 @@ WHERE       group_name = 'CiviCRM Session'
 AND         created_date < date_sub( NOW( ), INTERVAL $timeIntervalDays DAY )
 ";
       CRM_Core_DAO::executeQuery($sql);
+    }
   }
-}
 }
 

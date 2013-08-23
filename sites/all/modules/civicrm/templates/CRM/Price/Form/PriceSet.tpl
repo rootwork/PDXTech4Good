@@ -1,8 +1,8 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -52,7 +52,7 @@
                         {/if}
                     {/if}
                 {/foreach}
-        	      {if $element.help_post}
+                {if $element.help_post}
                     <div class="description">{$element.help_post}</div>
                 {/if}
                 </div>
@@ -64,6 +64,11 @@
 
                 <div class="label">{$form.$element_name.label}</div>
                 <div class="content {$element.name}-content">{$form.$element_name.html}
+                  {if $element.is_display_amounts && $element.html_type eq 'Text'}
+                    <span class="price-field-amount">
+                      x {foreach item=option from=$element.options}{$option.amount|crmMoney}{/foreach}
+                    </span>
+                  {/if}
                       {if $element.help_post}<br /><span class="description">{$element.help_post}</span>{/if}
                 </div>
                 <div class="clear"></div>
@@ -74,7 +79,7 @@
     {/foreach}
 
     {if $priceSet.help_post}
-    	<div class="messages help">{$priceSet.help_post}</div>
+      <div class="messages help">{$priceSet.help_post}</div>
     {/if}
 
 {* Include the total calculation widget if this is NOT a quickconfig event/contribution page. *}

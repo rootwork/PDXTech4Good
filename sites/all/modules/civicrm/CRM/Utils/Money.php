@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  * $Id$
  *
  */
@@ -109,16 +109,12 @@ class CRM_Utils_Money {
     // If it contains tags, means that HTML was passed and the
     // amount is already converted properly,
     // so don't mess with it again.
-    if (strip_tags($amount) === $amount) {
-      $money = strtr($amount, $rep);
+    if (strpos($amount, '<') === FALSE) {
+      $amount = strtr($amount, $rep);
     }
-    else {
-      $money = $amount;
-    }
-
 
     $replacements = array(
-      '%a' => $money,
+      '%a' => $amount,
       '%C' => $currency,
       '%c' => CRM_Utils_Array::value($currency, self::$_currencySymbols, $currency),
     );

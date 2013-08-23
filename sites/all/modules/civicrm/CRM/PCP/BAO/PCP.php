@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  * $Id$
  *
  */
@@ -63,27 +63,24 @@ class CRM_PCP_BAO_PCP extends CRM_PCP_DAO_PCP {
       $dao->save();
       return $dao;
     }
-    else {
-      $dao = new CRM_PCP_DAO_PCP();
-      $dao->copyValues($params);
 
-      // ensure we set status_id since it is a not null field
-      // we should change the schema and allow this to be null
-      if (!$dao->id &&
-        !isset($dao->status_id)
-      ) {
-        $dao->status_id = 0;
-      }
+    $dao = new CRM_PCP_DAO_PCP();
+    $dao->copyValues($params);
 
-      // set currency for CRM-1496
-      if (!isset($dao->currency)) {
-        $config = &CRM_Core_Config::singleton();
-        $dao->currency = $config->defaultCurrency;
-      }
-
-      $dao->save();
-      return $dao;
+    // ensure we set status_id since it is a not null field
+    // we should change the schema and allow this to be null
+    if (!$dao->id && !isset($dao->status_id)) {
+      $dao->status_id = 0;
     }
+
+    // set currency for CRM-1496
+    if (!isset($dao->currency)) {
+      $config = &CRM_Core_Config::singleton();
+        $dao->currency = $config->defaultCurrency;
+    }
+
+    $dao->save();
+    return $dao;
   }
 
   /**
@@ -117,7 +114,11 @@ WHERE  civicrm_pcp.contact_id = civicrm_contact.id
   static function getPcpDashboardInfo($contactId) {
     $links = self::pcpLinks();
 
-    $query = "                                                                                                                                                                                                  SELECT * FROM civicrm_pcp pcp                                                                                                                                                                              WHERE pcp.is_active = 1 AND                                                                                                                                                                                      pcp.contact_id = %1                                                                                                                                                                                  ORDER BY page_type, page_id";
+    $query = "
+SELECT * FROM civicrm_pcp pcp
+WHERE pcp.is_active = 1
+  AND pcp.contact_id = %1
+ORDER BY page_type, page_id";
 
     $params = array(1 => array($contactId, 'Integer'));
 
@@ -334,7 +335,7 @@ WHERE pcp.id = %1 AND cc.contribution_status_id =1 AND cc.is_test = 0";
    * @static
    *
    */
-  function delete($id) {
+  public static function deleteById($id) {
     CRM_Utils_Hook::pre('delete', 'Campaign', $id, CRM_Core_DAO::$_nullArray);
 
     $transaction = new CRM_Core_Transaction();
@@ -357,7 +358,7 @@ WHERE pcp.id = %1 AND cc.contribution_status_id =1 AND cc.is_test = 0";
    * @return None
    * @access public
    */
-  function buildPCPForm($form) {
+  public static function buildPCPForm($form) {
     $form->addElement('checkbox', 'pcp_active', ts('Enable Personal Campaign Pages?'), NULL, array('onclick' => "return showHideByValue('pcp_active',true,'pcpFields','block','radio',false);"));
 
     $form->addElement('checkbox', 'is_approval_needed', ts('Approval required'));
@@ -516,13 +517,13 @@ WHERE pcp.id = %1 AND cc.contribution_status_id =1 AND cc.is_test = 0";
       }
       elseif ($endDate) {
         if ($component == 'event') {
-            // Target_entity is an event and the event is over, redirect to event info instead of event registration page.
-            $url = CRM_Utils_System::url('civicrm/event/info',
-              "reset=1&id={$pcpBlock['entity_id']}",
-              FALSE, NULL, FALSE, TRUE
-            );
-            $statusMessage = ts('The event linked to the Personal Campaign Page you have just visited is over (as of %1).', array(1 => $customEndDate));
-            CRM_Core_Error::statusBounce($statusMessage, $url);
+          // Target_entity is an event and the event is over, redirect to event info instead of event registration page.
+          $url = CRM_Utils_System::url('civicrm/event/info',
+            "reset=1&id={$pcpBlock['entity_id']}",
+            FALSE, NULL, FALSE, TRUE
+          );
+          $statusMessage = ts('The event linked to the Personal Campaign Page you have just visited is over (as of %1).', array(1 => $customEndDate));
+          CRM_Core_Error::statusBounce($statusMessage, $url);
         } else {
           $statusMessage = ts('The Personal Campaign Page you have just visited is no longer active (as of %1). However you can still support the campaign here.', array(1 => $customEndDate));
           CRM_Core_Error::statusBounce($statusMessage, $url);
@@ -566,13 +567,13 @@ WHERE pcp.id = %1 AND cc.contribution_status_id =1 AND cc.is_test = 0";
     $pcpStatus = CRM_PCP_PseudoConstant::pcpStatus();
     $pcpStatus = $pcpStatus[$is_active];
 
-    CRM_Core_Session::setStatus("$pcpTitle status has been updated to $pcpStatus.");
+    CRM_Core_Session::setStatus(ts("%1 status has been updated to %2.", array(1 => $pcpTitle, 2 => $pcpStatus)), 'Status Updated', 'success');
 
     // send status change mail
     $result = self::sendStatusUpdate($id, $is_active, FALSE, $pcpPageType);
 
     if ($result) {
-      CRM_Core_Session::setStatus(ts("A notification email has been sent to the supporter."));
+      CRM_Core_Session::setStatus(ts("A notification email has been sent to the supporter."), ts('Email Sent'), 'success');
     }
   }
 
@@ -601,30 +602,21 @@ WHERE pcp.id = %1 AND cc.contribution_status_id =1 AND cc.is_test = 0";
     require_once 'Mail/mime.php';
 
     //set loginUrl
-    $loginUrl = $config->userFrameworkBaseURL;
-    switch (ucfirst($config->userFramework)) {
-      case 'Joomla':
-        $loginUrl = str_replace('administrator/', '', $loginUrl);
-        $loginUrl .= 'index.php?option=com_users&view=login';
-        break;
-
-      case 'Drupal':
-        $loginUrl .= 'user';
-        break;
-    }
+    $loginURL = $config->userSystem->getLoginURL();
 
     // used in subject templates
     $contribPageTitle = self::getPcpPageTitle($pcpId, $component);
 
     $tplParams = array(
-      'loginUrl' => $loginUrl,
+      'loginUrl' => $loginURL,
       'contribPageTitle' => $contribPageTitle,
+      'pcpId' => $pcpId,
     );
 
     //get the default domain email address.
     list($domainEmailName, $domainEmailAddress) = CRM_Core_BAO_Domain::getNameAndEmail();
 
-    if (!$domainEmailAddress || $domainEmailAddress == 'info@FIXME.ORG') {
+    if (!$domainEmailAddress || $domainEmailAddress == 'info@EXAMPLE.ORG') {
       $fixUrl = CRM_Utils_System::url("civicrm/admin/domain", 'action=update&reset=1');
       CRM_Core_Error::fatal(ts('The site administrator needs to enter a valid \'FROM Email Address\' in <a href="%1">Administer CiviCRM &raquo; Communications &raquo; FROM Email Addresses</a>. The email address used may need to be a valid mail account with your email service provider.', array(1 => $fixUrl)));
     }

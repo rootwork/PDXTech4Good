@@ -294,20 +294,19 @@ class MessageSubscribeAdvancedQueueTest extends DrupalWebTestCase {
 
   public static function getInfo() {
     return array(
-      'name' => 'Advanced Queue',
-      'description' => 'Test sending messages using the AdvancedQueue module.',
+      'name' => 'Queue API',
+      'description' => 'Test integration with queue API.',
       'group' => 'Message subscribe',
-      'dependencies' => array('advancedqueue'),
     );
   }
 
   function setUp() {
-    parent::setUp('message_subscribe', 'advancedqueue');
+    parent::setUp('message_subscribe');
 
     // Override default notifiers.
     variable_set('message_subscribe_default_notifiers', array());
 
-    // Enable advanced-queue.
+    // Enable using queue.
     variable_set('message_subscribe_use_queue', TRUE);
 
     // Create a dummy message-type.
@@ -334,7 +333,7 @@ class MessageSubscribeAdvancedQueueTest extends DrupalWebTestCase {
     $subscribe_options['save message'] = FALSE;
 
     try {
-      $message = message_subscribe_process_message('node', $node, $message, array(), $subscribe_options);
+      $message = message_subscribe_send_message('node', $node, $message, array(), $subscribe_options);
       $this->fail('Can add a non-saved message to the queue.');
     }
     catch (Exception $e) {
@@ -350,7 +349,7 @@ class MessageSubscribeAdvancedQueueTest extends DrupalWebTestCase {
     );
     $queue = DrupalQueue::get('message_subscribe');
     $this->assertEqual($queue->numberOfItems(), 0, 'Queue is empty');
-    message_subscribe_process_message('node', $node, $message, array(), $subscribe_options);
+    message_subscribe_send_message('node', $node, $message, array(), $subscribe_options);
     $this->assertTrue($message->mid, 'Message was saved');
     $this->assertEqual($queue->numberOfItems(), 1, 'Message added to queue.');
 
@@ -367,17 +366,11 @@ class MessageSubscribeAdvancedQueueTest extends DrupalWebTestCase {
       'end time' => FALSE,
     );
 
-    message_subscribe_process_message('node', $node, $message, array(), $subscribe_options);
+    message_subscribe_send_message('node', $node, $message, array(), $subscribe_options);
 
-    // Reclaim the item, assert it is the same one, and that the last UID
-    // was updated.
+    // Reclaim the new item, and assert the "last UID" was updated.
     $item = $queue->claimItem();
-    $this->assertEqual($item_id, $item->item_id, 'Queue item was updated.');
+    $this->assertNotEqual($item_id, $item->item_id, 'Queue item was updated.');
     $this->assertEqual($item->data['subscribe_options']['last uid'], 3, 'Last processed user ID was updated.');
-
-    // Assert queue-item is deleted.
-    $subscribe_options['uids'] = array();
-    message_subscribe_process_message('node', $node, $message, array(), $subscribe_options);
-    $this->assertEqual($queue->numberOfItems(), 0, 'Message removed from queue.');
   }
 }

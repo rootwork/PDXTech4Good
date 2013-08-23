@@ -1,9 +1,9 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.2                                                |
+ | CiviCRM version 4.3                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2012                                |
+ | Copyright CiviCRM LLC (c) 2004-2013                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -28,7 +28,7 @@
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2012
+ * @copyright CiviCRM LLC (c) 2004-2013
  *
  */
 
@@ -223,7 +223,7 @@ AND    {$this->_componentClause}";
       $input['trxn_id']    = $contribution->trxn_id;
       $input['trxn_date']  = isset($contribution->trxn_date) ? $contribution->trxn_date : NULL;
 
-      // CRM_Contribute_BAO_Contribution::composeMessageArray expects mysql formatted date
+      // CRM_Contribute_BAO_Contribution::composeMessageArray expects mysql formatted date     
       $objects['contribution']->receive_date = CRM_Utils_Date::isoToMysql($objects['contribution']->receive_date);
 
       // CRM_Core_Error::debug('input',$input);
@@ -251,12 +251,16 @@ AND    {$this->_componentClause}";
     }
     else {
       if ($suppressedEmails) {
-        $status = array('', ts('Email was NOT sent to %1 contacts (no email address on file, or communication preferences specify DO NOT EMAIL, or contact is deceased).', array(1 => $suppressedEmails)));
+        $status = ts('Email was NOT sent to %1 contacts (no email address on file, or communication preferences specify DO NOT EMAIL, or contact is deceased).', array(1 => $suppressedEmails));
+        $msgTitle = ts('Email Error');
+        $msgType = 'error';
       }
       else {
-        $status = array('', ts('Your mail has been sent.'));
+        $status = ts('Your mail has been sent.');
+        $msgTitle = ts('Sent');
+        $msgType = 'success';
       }
-      CRM_Core_Session::setStatus($status);
+      CRM_Core_Session::setStatus($status, $msgTitle, $msgType);
     }
   }
 }
