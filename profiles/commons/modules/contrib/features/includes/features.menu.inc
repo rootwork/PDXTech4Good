@@ -135,7 +135,8 @@ function menu_links_features_export_options() {
   // Need to set this to TRUE in order to get menu links that the
   // current user may not have access to (i.e. user/login)
   $menu_admin = TRUE;
-  $menu_links = menu_parent_options(menu_get_menus(), array('mlid' => 0));
+  $use_menus = array_intersect_key(menu_get_menus(), array_flip(array_filter(variable_get('features_admin_menu_links_menus', array_keys(menu_get_menus())))));
+  $menu_links = menu_parent_options($use_menus, array('mlid' => 0));
   $options = array();
   foreach ($menu_links as $key => $name) {
     list($menu_name, $mlid) = explode(':', $key, 2);
@@ -297,9 +298,10 @@ function menu_links_features_rebuild_ordered($menu_links, $reset = FALSE) {
 function features_menu_link_load($identifier) {
   list($menu_name, $link_path) = explode(':', $identifier, 2);
   $link = db_select('menu_links')
-    ->fields('menu_links', array('menu_name', 'mlid', 'plid', 'link_path', 'router_path', 'link_title', 'options', 'module', 'hidden', 'external', 'has_children', 'expanded', 'weight'))
+    ->fields('menu_links', array('menu_name', 'mlid', 'plid', 'link_path', 'router_path', 'link_title', 'options', 'module', 'hidden', 'external', 'has_children', 'expanded', 'weight', 'customized'))
     ->condition('menu_name', $menu_name)
     ->condition('link_path', $link_path)
+    ->addTag('features_menu_link')
     ->execute()
     ->fetchAssoc();
   if ($link) {

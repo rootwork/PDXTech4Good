@@ -15,9 +15,8 @@
       if (mtsTP == 'true') { breakpoints.push(bp3 + ':' + themeSettings[activeTheme]['media_query_settings']['tablet_portrait']); }
       if (mtsTL == 'true') { breakpoints.push(bp4 + ':' + themeSettings[activeTheme]['media_query_settings']['tablet_portrait']); }
 
-      $("#secondary-menu-bar, #primary-menu-bar, #menu-bar").addClass('at-menu-toggle');
       $(".at-menu-toggle h2").removeClass('element-invisible').addClass('at-menu-toggle-button').wrapInner('<a href="#menu-toggle" class="at-menu-toggle-button-link" />');
-      $(".at-menu-toggle nav > ul[class*=menu]:nth-of-type(1)").wrap('<div id="menu-toggle" />');
+      $(".at-menu-toggle ul[class*=menu]:nth-of-type(1)").wrap('<div class="menu-toggle" />');
 
       !function(breakName, query){
 
@@ -37,7 +36,7 @@
 
         // Toggle menus open or closed
         $(".at-menu-toggle-button-link").click(function() {
-          $(this).parent().next().slideToggle('fast');
+          $(this).parent().siblings('.menu-toggle').slideToggle(100, 'swing');
           return false;
         });
 

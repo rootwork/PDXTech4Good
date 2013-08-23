@@ -10,6 +10,12 @@
 function commons_events_field_default_field_instances() {
   $field_instances = array();
 
+  // Because the 'site_default_country' variable gets set, but is empty when no
+  // default country is set, we'll need to do some checks to see if its empty
+  // and display a default country on our own. 
+  // See https://drupal.org/node/2068957#comment-7773019 for more info.
+  $default_country = variable_get('site_default_country', 'US');
+
   // Exported field_instance: 'node-event-body'
   $field_instances['node-event-body'] = array(
     'bundle' => 'event',
@@ -66,7 +72,7 @@ function commons_events_field_default_field_instances() {
         'locality' => '',
         'administrative_area' => '',
         'postal_code' => '',
-        'country' => 'US',
+        'country' => !empty($default_country) ? $default_country : 'US',
       ),
     ),
     'deleted' => '0',
@@ -74,26 +80,32 @@ function commons_events_field_default_field_instances() {
     'display' => array(
       'default' => array(
         'label' => 'hidden',
-        'module' => 'addressfield',
+        'module' => 'addressfield_tokens',
         'settings' => array(
-          'format_handlers' => array(
-            0 => 'address',
+          'components' => array(
+            'administrative_area' => 'administrative_area',
+            'locality' => 'locality',
+            'postal_code' => 'postal_code',
+            'thoroughfare' => 'thoroughfare',
           ),
-          'use_widget_handlers' => 1,
+          'separator' => ', ',
         ),
-        'type' => 'addressfield_default',
+        'type' => 'addressfield_components',
         'weight' => '2',
       ),
       'teaser' => array(
         'label' => 'hidden',
-        'module' => 'addressfield',
+        'module' => 'addressfield_tokens',
         'settings' => array(
-          'format_handlers' => array(
-            0 => 'address'
+          'components' => array(
+            'administrative_area' => 'administrative_area',
+            'locality' => 'locality',
+            'postal_code' => 'postal_code',
+            'thoroughfare' => 'thoroughfare',
           ),
-          'use_widget_handlers' => 1,
+          'separator' => ', ',
         ),
-        'type' => 'addressfield_default',
+        'type' => 'addressfield_components',
         'weight' => '2',
       ),
     ),
@@ -431,7 +443,7 @@ function commons_events_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'field_name' => 'field_registration',
-    'label' => 'Registration',
+    'label' => 'Registration bundle',
     'required' => 0,
     'settings' => array(
       'default_registration_settings' => array(
@@ -497,46 +509,6 @@ function commons_events_field_default_field_instances() {
       'settings' => array(),
       'type' => 'options_select',
       'weight' => '11',
-    ),
-  );
-
-  // Exported field_instance: 'node-event-field_topics'
-  $field_instances['node-event-field_topics'] = array(
-    'bundle' => 'event',
-    'default_value' => NULL,
-    'deleted' => '0',
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => '6',
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_topics',
-    'label' => 'Topics',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 0,
-      'module' => 'taxonomy',
-      'settings' => array(
-        'autocomplete_path' => 'taxonomy/autocomplete',
-        'size' => 60,
-      ),
-      'type' => 'taxonomy_autocomplete',
-      'weight' => '13',
     ),
   );
 

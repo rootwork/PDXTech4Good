@@ -168,8 +168,9 @@ class SolrFilterSubQuery {
       }
 
       // For the name we allow any character that fits between the A-Z0-9 range and
-      // any alternative for this in other languages. No special characters allowed
-      if (!preg_match('/^[a-zA-Z0-9_\x7f-\xff]+$/', $name)) {
+      // any alternative for this in other languages. No special characters allowed.
+      // Negative filters may have a leading "-".
+      if (!preg_match('/^-?[a-zA-Z0-9_\x7f-\xff]+$/', $name)) {
         return FALSE;
       }
 
@@ -273,7 +274,7 @@ class SolrBaseQuery extends SolrFilterSubQuery implements DrupalSolrQueryInterfa
    * environment id
    */
   protected $name;
-
+  protected $context = array();
   // Makes sure we always have a valid sort.
   protected $solrsort = array('#name' => 'score', '#direction' => 'desc');
   // A flag to allow the search to be aborted.
@@ -300,11 +301,12 @@ class SolrBaseQuery extends SolrFilterSubQuery implements DrupalSolrQueryInterfa
    * @param $base_path
    *   The search base path (without the keywords) for this query, without trailing slash.
    */
-  function __construct($name, $solr, array $params = array(), $sortstring = '', $base_path = '') {
+  function __construct($name, $solr, array $params = array(), $sortstring = '', $base_path = '', $context = array()) {
     parent::__construct();
     $this->name = $name;
     $this->solr = $solr;
-    $this->addParams($params);
+    $this->addContext((array) $context);
+    $this->addParams((array) $params);
     $this->available_sorts = $this->defaultSorts();
     $this->sortstring = trim($sortstring);
     $this->parseSortString();
@@ -333,6 +335,25 @@ class SolrBaseQuery extends SolrFilterSubQuery implements DrupalSolrQueryInterfa
    */
   public function getSearcher() {
     return $this->name . '@' . $this->solr->getId();
+  }
+
+  /**
+   * Get context values.
+   */
+  public function getContext() {
+    return $this->context;
+  }
+
+  /**
+   * Set context value.
+   */
+  public function addContext(array $context) {
+    foreach ($context as $k => $v) {
+      $this->context[$k] = $v;
+    }
+    // The env_id must match that of the actual $solr object
+    $this->context['env_id'] = $this->solr->getId();
+    return $this->context;
   }
 
   protected $single_value_params = array(
@@ -507,6 +528,15 @@ class SolrBaseQuery extends SolrFilterSubQuery implements DrupalSolrQueryInterfa
     return $this->addParam($name, $value);
   }
 
+  /**
+   * Handles aliases for field to make nicer URLs.
+   *
+   * @param $field_map
+   *   An array keyed with real Solr index field names with the alias as value.
+   *
+   * @return DrupalSolrQueryInterface
+   *   The called object.
+   */
   public function addFieldAliases($field_map) {
     $this->field_map = array_merge($this->field_map, $field_map);
     // We have to re-parse the filters.

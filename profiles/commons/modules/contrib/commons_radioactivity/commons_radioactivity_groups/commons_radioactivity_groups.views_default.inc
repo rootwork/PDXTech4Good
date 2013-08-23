@@ -96,6 +96,14 @@ function commons_radioactivity_groups_views_default_views() {
   $handler->display->display_options['filters']['field_radioactivity_radioactivity_energy']['field'] = 'field_radioactivity_radioactivity_energy';
   $handler->display->display_options['filters']['field_radioactivity_radioactivity_energy']['operator'] = '>=';
   $handler->display->display_options['filters']['field_radioactivity_radioactivity_energy']['value']['value'] = '.1';
+  /* Filter criterion: OG membership: Group_type */
+  $handler->display->display_options['filters']['group_type']['id'] = 'group_type';
+  $handler->display->display_options['filters']['group_type']['table'] = 'og_membership';
+  $handler->display->display_options['filters']['group_type']['field'] = 'group_type';
+  $handler->display->display_options['filters']['group_type']['relationship'] = 'og_membership_rel';
+  $handler->display->display_options['filters']['group_type']['value'] = array(
+    'node' => 'node',
+  );
 
   /* Display: Content pane */
   $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
@@ -111,6 +119,27 @@ function commons_radioactivity_groups_views_default_views() {
       'fixed' => '',
       'label' => 'OG membership: Group ID',
     ),
+  );
+  $translatables['commons_radioactivity_groups_active_in_group'] = array(
+    t('Master'),
+    t('Active in this group'),
+    t('more'),
+    t('Apply'),
+    t('Reset'),
+    t('Sort by'),
+    t('Asc'),
+    t('Desc'),
+    t('Items per page'),
+    t('- All -'),
+    t('Offset'),
+    t('« first'),
+    t('‹ previous'),
+    t('next ›'),
+    t('last »'),
+    t('OG membership from node'),
+    t('All'),
+    t('Content pane'),
+    t('Commons'),
   );
   $export['commons_radioactivity_groups_active_in_group'] = $view;
 
@@ -191,6 +220,18 @@ function commons_radioactivity_groups_views_default_views() {
   $handler->display->display_options['defaults']['hide_admin_links'] = FALSE;
   $handler->display->display_options['pane_category']['name'] = 'Commons';
   $handler->display->display_options['pane_category']['weight'] = '0';
+  $translatables['commons_radioactivity_groups_most_active'] = array(
+    t('Master'),
+    t('Most active groups'),
+    t('more'),
+    t('Apply'),
+    t('Reset'),
+    t('Sort by'),
+    t('Asc'),
+    t('Desc'),
+    t('Content pane'),
+    t('Commons'),
+  );
   $export['commons_radioactivity_groups_most_active'] = $view;
 
   return $export;
